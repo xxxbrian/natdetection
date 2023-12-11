@@ -146,8 +146,18 @@ func StunTest(conn *net.UDPConn, host string, port int, sourceIP string, sourceP
 		return retVal, fmt.Errorf("no IP address found for host: %s", host)
 	}
 
-	// Use the first resolved IP address
-	serverAddr := &net.UDPAddr{IP: net.ParseIP(ips[0]), Port: port}
+	// IPv4 Only
+	var serverAddr *net.UDPAddr
+	for _, ip := range ips {
+		parsedIP := net.ParseIP(ip)
+		if parsedIP.To4() != nil {
+			serverAddr = &net.UDPAddr{IP: parsedIP, Port: port}
+			break
+		}
+	}
+	if serverAddr == nil {
+		return retVal, fmt.Errorf("no IPv4 address found for host: %s", host)
+	}
 
 	// Convert send data to bytes
 	strLen := fmt.Sprintf("%04x", len(sendData)/2)
